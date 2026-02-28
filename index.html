@@ -1,0 +1,2761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROLL20 desc 도우미</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Orbitron:wght@700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff3366;
+            --secondary: #6c5ce7;
+            --dark: #1a1a2e;
+            --darker: #0f0f1a;
+            --light: #f8f9fa;
+            --border: #00ffff;
+            --shadow: rgba(255, 51, 102, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 50%, #16213e 100%);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(108, 92, 231, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 51, 102, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), #00ffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px var(--shadow);
+            animation: glow 2s ease-in-out infinite alternate;
+            letter-spacing: 3px;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px var(--shadow)); }
+            to { filter: drop-shadow(0 0 20px var(--shadow)); }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 3rem;
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 32px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .panel h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--border);
+            letter-spacing: 2px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #c0c0c0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 0.95rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--shadow);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: monospace;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), rgba(255, 51, 102, 0.2));
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .preset-btn:hover {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.4), rgba(255, 51, 102, 0.4));
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .preset-btn.active {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-color: var(--border);
+        }
+
+        .color-input-group {
+            display: grid;
+            grid-template-columns: 1fr 80px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 45px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="color"]:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--shadow);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Bebas Neue', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 5px 20px var(--shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px var(--shadow);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: var(--border);
+        }
+
+        .preview-box {
+            background: #ffffff;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 150px;
+            min-width: 800px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #previewContent {
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .code-output {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #00ff00;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .code-output::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .code-output::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .code-output::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px var(--shadow);
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.4s ease;
+            z-index: 1000;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        @media (max-width: 968px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .preset-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .gradient-panel {
+                right: 10px;
+                left: 10px;
+                width: auto;
+                max-height: 70vh;
+            }
+            
+            .gradient-panel.minimized {
+                right: 10px;
+                left: auto;
+                width: 60px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .panel {
+                padding: 15px;
+            }
+            
+            .panel h2 {
+                font-size: 1.5rem;
+            }
+            
+            .style-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .gradient-panel {
+                padding: 15px;
+                top: auto;
+                bottom: 0;
+                transform: none;
+                border-radius: 15px 15px 0 0;
+                max-height: 60vh;
+            }
+            
+            .gradient-panel.active {
+                animation: slideUp 0.3s ease;
+            }
+            
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(100%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .gradient-panel.minimized {
+                bottom: 10px;
+                top: auto;
+                right: 10px;
+                left: auto;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+            }
+        }
+
+        .style-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-item label {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+        }
+
+        .control-item input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .control-item input[type="range"]::-webkit-slider-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .style-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .style-btn {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .style-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .style-btn.active {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-color: var(--border);
+            box-shadow: 0 0 15px var(--shadow);
+        }
+
+        .font-size-slider {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+
+        .font-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--shadow);
+        }
+
+        .font-size-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px var(--shadow);
+        }
+
+        .add-paragraph-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px dashed rgba(0, 255, 255, 0.5);
+            border-radius: 8px;
+            color: var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .add-paragraph-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: var(--primary);
+        }
+
+        .paragraph-item {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .remove-paragraph-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .remove-paragraph-btn:hover {
+            background: #ff1744;
+            transform: scale(1.1);
+        }
+
+        .paragraph-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #c0c0c0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .gradient-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            display: none;
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 320px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1000;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .gradient-panel::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .gradient-panel.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        .gradient-panel:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .gradient-panel h3 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--border);
+            letter-spacing: 2px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .gradient-type-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .gradient-type-btn {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .gradient-type-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .gradient-type-btn.active {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-color: var(--border);
+        }
+
+        .minimize-gradient-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background: var(--secondary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .minimize-gradient-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        /* 색놀이 패널 스타일 */
+        .color-play-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 46, 0.70);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 80px 40px 40px 40px;
+        }
+
+        .color-play-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .color-play-panel.minimized {
+            width: 80px;
+            height: 80px;
+            top: 20px;
+            left: 20px;
+            bottom: auto;
+            right: auto;
+            border-radius: 50%;
+            padding: 0;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid var(--primary);
+        }
+
+        .color-play-panel.minimized .color-play-content {
+            display: none;
+        }
+
+        .color-play-panel.minimized::before {
+            content: '🎨';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+        }
+
+        .minimize-colorplay-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: var(--secondary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 2001;
+        }
+
+        .color-play-panel.active ~ .minimize-colorplay-btn,
+        .color-play-panel.active + * .minimize-colorplay-btn {
+            display: flex;
+        }
+
+        .minimize-colorplay-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .color-play-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .color-play-panel h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: var(--border);
+            letter-spacing: 3px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), #00ffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .char-items-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .colorplay-global-settings {
+            background: rgba(0, 255, 255, 0.05);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .colorplay-global-settings .form-group {
+            margin-bottom: 0;
+        }
+
+        .colorplay-global-settings label {
+            color: var(--border);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .char-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            min-width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .char-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 5px 20px var(--shadow);
+            transform: translateY(-3px);
+        }
+
+        .char-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .char-label {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--border);
+        }
+
+        .remove-char-btn {
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .remove-char-btn:hover {
+            background: #ff1744;
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .char-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .add-char-btn {
+            width: 250px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.3), rgba(255, 51, 102, 0.3));
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            border-radius: 12px;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .add-char-btn:hover {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.5), rgba(255, 51, 102, 0.5));
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px var(--shadow);
+        }
+
+        /* 선택지 만들기 패널 스타일 */
+        .choice-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 80px 40px 40px 40px;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+
+        .choice-panel::-webkit-scrollbar {
+            display: none; /* Chrome/Safari/Opera */
+        }
+
+        .choice-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .choice-panel.minimized {
+            width: 80px;
+            height: 80px;
+            top: 20px;
+            right: 20px;
+            bottom: auto;
+            left: auto;
+            border-radius: 50%;
+            padding: 0;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid var(--primary);
+        }
+
+        .choice-panel.minimized .choice-content {
+            display: none;
+        }
+
+        .choice-panel.minimized::before {
+            content: '📋';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+        }
+
+        .minimize-choice-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: var(--secondary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 2001;
+        }
+
+        .minimize-choice-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .choice-content {
+            max-width: 95%;
+            margin: 0;
+            margin-left: 40px;
+        }
+
+        .choice-panel h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: var(--border);
+            letter-spacing: 3px;
+            text-align: left;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), #00ffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .choice-items-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .choice-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .choice-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 5px 20px var(--shadow);
+        }
+
+        .choice-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .choice-label {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--border);
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .remove-choice-btn {
+            width: 26px;
+            height: 26px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .remove-choice-btn:hover {
+            background: #ff1744;
+            transform: scale(1.1);
+        }
+
+        .add-choice-btn {
+            width: 300px;
+            padding: 12px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px dashed rgba(0, 255, 255, 0.5);
+            border-radius: 12px;
+            color: var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .add-choice-btn:hover {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .choice-title-item {
+            max-width: 48%;
+            margin-bottom: 20px;
+        }
+
+        .choice-style-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .choice-style-btn {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 6px;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .choice-style-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .choice-style-btn.active {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-color: var(--border);
+        }
+
+        .choice-color-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* 선택지 그라데이션 패널 */
+        .choice-gradient-panel {
+            display: none;
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            background: rgba(26, 26, 46, 0.98);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px;
+            z-index: 3000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .choice-gradient-panel.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        .choice-gradient-panel h4 {
+            color: var(--border);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            border-bottom: 1px solid var(--primary);
+            padding-bottom: 8px;
+        }
+
+        .close-choice-gradient-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-choice-gradient-btn:hover {
+            background: #ff1744;
+            transform: scale(1.1);
+        }
+
+        .char-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1.2rem;
+            text-align: center;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .char-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--shadow);
+        }
+
+        .gradient-panel.minimized {
+            width: 60px;
+            height: 60px;
+            padding: 0;
+            overflow: hidden;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .gradient-panel.minimized .gradient-content {
+            display: none;
+        }
+
+        .gradient-panel.minimized .minimize-gradient-btn {
+            display: none;
+        }
+
+        .gradient-panel.minimized::before {
+            content: '🎨';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+        }
+
+        .gradient-content {
+            display: block;
+        }
+
+        .gradient-color-stops {
+            margin-top: 15px;
+        }
+
+        .color-stop-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .remove-color-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .remove-color-btn:hover {
+            background: #ff1744;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ROLL20 desc 도우미</h1>
+
+        <div class="grid">
+            <!-- 입력 패널 -->
+            <div class="panel">
+                <h2>텍스트 입력</h2>
+                
+                <div class="form-group">
+                    <label>텍스트</label>
+                    <textarea id="textInput" placeholder="여기에 텍스트를 입력하세요..." oninput="updatePreview()">샘플 텍스트</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>스타일 프리셋</label>
+                    <div class="preset-grid">
+                        <button class="preset-btn" onclick="applyPreset('basic')">기본(/desc 표준)</button>
+                        <button class="preset-btn" id="gradientPresetBtn" data-preset="example1" onclick="applyPreset('example1')">그라데이션 추가</button>
+                        <button class="preset-btn" id="colorPlayPresetBtn" data-preset="colorPlay" onclick="applyPreset('colorPlay')">색놀이</button>
+                        <button class="preset-btn" id="choicePresetBtn" data-preset="choice" onclick="applyPreset('choice')">선택지 만들기</button>
+                    </div>
+                </div>
+
+                <div class="form-group" id="styleOptionsGroup">
+                    <label>스타일 옵션</label>
+                    <div class="style-buttons">
+                        <button class="style-btn" id="italicBtn" onclick="toggleStyle('italic')">기울기</button>
+                        <button class="style-btn" id="boldBtn" onclick="toggleStyle('bold')">얇게</button>
+                        <button class="style-btn" id="underlineBtn" onclick="toggleStyle('underline')">밑줄</button>
+                        <button class="style-btn" id="linethroughBtn" onclick="toggleStyle('linethrough')">취소선</button>
+                    </div>
+                </div>
+
+                <div class="form-group" id="fontSizeGroup">
+                    <label>폰트 크기: <span id="fontSizeValue">13.5</span>px (기본값 13.5px)</label>
+                    <input type="range" id="fontSize" value="13.5" min="8" max="50" step="0.5" class="font-size-slider">
+                </div>
+
+                <div class="form-group" id="textColorGroup">
+                    <label>텍스트 색상 (기본값 #000000)</label>
+                    <div class="color-input-group">
+                        <input type="color" id="textColor" value="#000000">
+                        <input type="text" id="textColorHex" value="#000000" maxlength="7">
+                    </div>
+                </div>
+
+                <div class="form-group" id="bgColorGroup">
+                    <label>배경 색상 (기본값 #F1F1F1)</label>
+                    <div class="color-input-group">
+                        <input type="color" id="bgColor" value="#f1f1f1">
+                        <input type="text" id="bgColorHex" value="#F1F1F1" maxlength="7">
+                    </div>
+                </div>
+
+                <div class="form-group" id="bgSizeGroup">
+                    <label>백그라운드 너비: <span id="bgWidthValue">자동</span></label>
+                    <input type="range" id="bgWidth" value="0" min="0" max="800" step="10" class="font-size-slider">
+                    <small style="color: #888; font-size: 0.8rem;">0 = 자동 (텍스트에 맞춤)</small>
+                </div>
+
+                <div class="form-group" id="bgHeightGroup">
+                    <label>백그라운드 높이: <span id="bgHeightValue">자동</span></label>
+                    <input type="range" id="bgHeight" value="0" min="0" max="300" step="5" class="font-size-slider">
+                    <small style="color: #888; font-size: 0.8rem;">0 = 자동 (텍스트에 맞춤)</small>
+                </div>
+
+                <div class="form-group" id="lineHeightGroup">
+                    <label>텍스트 높이: <span id="lineHeightValue">자동</span></label>
+                    <input type="range" id="lineHeight" value="0" min="0" max="300" step="1" class="font-size-slider">
+                    <small style="color: #888; font-size: 0.8rem;">0 = 자동 (높이와 동일)</small>
+                </div>
+
+                <div class="form-group" id="borderRadiusGroup">
+                    <label>모서리 곡률: <span id="borderRadiusValue">0</span>px</label>
+                    <input type="range" id="borderRadius" value="0" min="0" max="50" step="1" class="font-size-slider">
+                </div>
+
+
+            </div>
+
+            <!-- 출력 패널 -->
+            <div class="panel">
+                <h2>미리보기</h2>
+                <div class="preview-box" id="preview">
+                    <div id="previewContent">샘플 텍스트</div>
+                </div>
+
+                <h2 style="margin-top: 30px;">Roll20 코드</h2>
+                <div class="code-output" id="output">/desc </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="copyToClipboard()">📋 복사하기</button>
+                    <button class="btn btn-secondary" onclick="resetForm()">🔄 초기화</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        클립보드에 복사되었습니다! ✨
+    </div>
+
+    <!-- 그라데이션 설정 패널 -->
+    <div class="gradient-panel" id="gradientPanel" onclick="toggleGradientPanel(event)">
+        <button class="minimize-gradient-btn" onclick="minimizeGradientPanel(event)">−</button>
+        <div class="gradient-content">
+            <h3>그라데이션 설정</h3>
+            
+            <div class="form-group">
+                <label>그라데이션 타입</label>
+                <div class="gradient-type-buttons">
+                    <button class="gradient-type-btn active" onclick="setGradientType('linear', event)">선형</button>
+                    <button class="gradient-type-btn" onclick="setGradientType('radial', event)">원형</button>
+                </div>
+            </div>
+
+            <div class="form-group" id="gradientAngleGroup">
+                <label>방향: <span id="gradientAngleValue">90</span>deg</label>
+            <input type="range" id="gradientAngle" value="90" min="0" max="360" step="1" class="font-size-slider">
+        </div>
+
+        <div class="gradient-color-stops" id="gradientColorStops">
+            <div class="color-stop-item" data-index="0">
+                <div class="form-group">
+                    <label>색상 1</label>
+                    <div class="color-input-group">
+                        <input type="color" class="gradient-color" data-index="0" value="#ff3366">
+                        <input type="text" class="gradient-color-hex" data-index="0" value="#FF3366" maxlength="7">
+                    </div>
+                </div>
+            </div>
+
+            <div class="color-stop-item" data-index="1">
+                <div class="form-group">
+                    <label>색상 2</label>
+                    <div class="color-input-group">
+                        <input type="color" class="gradient-color" data-index="1" value="#6c5ce7">
+                        <input type="text" class="gradient-color-hex" data-index="1" value="#6C5CE7" maxlength="7">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="add-paragraph-btn" onclick="addGradientColor()" style="margin-top: 15px;">+ 색상 추가</button>
+        </div>
+    </div>
+
+    <!-- 색놀이 설정 패널 -->
+    <div class="color-play-panel" id="colorPlayPanel" onclick="toggleColorPlayPanel(event)">
+        <div class="color-play-content">
+            <h3>색놀이 설정</h3>
+            
+            <!-- 전체 폰트 크기 설정 -->
+            <div class="colorplay-global-settings">
+                <div class="form-group">
+                    <label>전체 폰트 크기: <span id="colorPlayFontSizeValue">13.5</span>px</label>
+                    <input type="range" id="colorPlayFontSize" value="13.5" min="8" max="50" step="0.5" 
+                           class="font-size-slider" oninput="updateColorPlayFontSize(this.value)">
+                </div>
+            </div>
+            
+            <div class="char-items-grid" id="charItemsContainer">
+                <!-- 글자 아이템들이 동적으로 추가됨 -->
+            </div>
+            <button class="add-char-btn" onclick="addCharItem()">+ 글자 추가</button>
+        </div>
+    </div>
+    <button class="minimize-colorplay-btn" id="minimizeColorPlayBtn" onclick="minimizeColorPlayPanel()">−</button>
+
+    <!-- 선택지 만들기 패널 -->
+    <div class="choice-panel" id="choicePanel" onclick="toggleChoicePanel(event)">
+        <div class="choice-content">
+            <h3>선택지 만들기</h3>
+            
+            <!-- 선택지 주제 -->
+            <div class="choice-item choice-title-item">
+                <div class="choice-item-header">
+                    <span class="choice-label">선택지 주제</span>
+                </div>
+                <div class="form-group">
+                    <label>주제 내용</label>
+                    <input type="text" id="choiceTitle" class="char-input" placeholder="선택지 주제를 입력하세요" value="">
+                </div>
+                <div class="form-group">
+                    <label>스타일 옵션</label>
+                    <div class="choice-style-controls">
+                        <button class="choice-style-btn" id="titleItalicBtn" onclick="toggleChoiceTitleStyle('italic')">기울기</button>
+                        <button class="choice-style-btn" id="titleBoldBtn" onclick="toggleChoiceTitleStyle('bold')">얇게</button>
+                        <button class="choice-style-btn" id="titleUnderlineBtn" onclick="toggleChoiceTitleStyle('underline')">밑줄</button>
+                        <button class="choice-style-btn" id="titleLinethroughBtn" onclick="toggleChoiceTitleStyle('linethrough')">취소선</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>폰트 크기: <span id="titleFontSizeValue">13.5</span>px</label>
+                    <input type="range" id="titleFontSize" value="13.5" min="8" max="50" step="0.5" 
+                           class="font-size-slider" oninput="updateChoiceTitleFontSize(this.value)">
+                </div>
+                <div class="form-group">
+                    <label>텍스트 색상</label>
+                    <div class="color-input-group">
+                        <input type="color" id="titleColor" value="#000000" onchange="updateChoiceTitleColor(this.value)">
+                        <input type="text" id="titleColorHex" value="#000000" maxlength="7" onchange="updateChoiceTitleColorHex(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 선택지 아이템들 -->
+            <div class="choice-items-container" id="choiceItemsContainer">
+                <!-- 선택지들이 동적으로 추가됨 -->
+            </div>
+            
+            <button class="add-choice-btn" onclick="addChoiceItem()">+ 선택지 추가</button>
+        </div>
+    </div>
+    <button class="minimize-choice-btn" id="minimizeChoiceBtn" onclick="minimizeChoicePanel()">−</button>
+
+    <!-- 선택지 그라데이션 설정 패널 -->
+    <div class="choice-gradient-panel" id="choiceGradientPanel">
+        <button class="close-choice-gradient-btn" onclick="closeChoiceGradientPanel()">×</button>
+        <h4 id="choiceGradientPanelTitle">그라데이션 설정</h4>
+        
+        <div class="form-group">
+            <label>그라데이션 타입</label>
+            <div class="gradient-type-buttons">
+                <button class="gradient-type-btn active" id="choiceGradientLinear" onclick="setChoiceGradientType('linear')">선형</button>
+                <button class="gradient-type-btn" id="choiceGradientRadial" onclick="setChoiceGradientType('radial')">원형</button>
+            </div>
+        </div>
+
+        <div class="form-group" id="choiceGradientAngleGroup">
+            <label>방향: <span id="choiceGradientAngleValue">90</span>deg</label>
+            <input type="range" id="choiceGradientAngle" value="90" min="0" max="360" step="1" class="font-size-slider" oninput="updateChoiceGradientAngle(this.value)">
+        </div>
+
+        <div class="gradient-color-stops" id="choiceGradientColorStops">
+            <!-- 색상들이 동적으로 추가됨 -->
+        </div>
+
+        <button class="add-paragraph-btn" onclick="addChoiceGradientColor()" style="margin-top: 15px;">+ 색상 추가</button>
+    </div>
+
+    <script>
+        // 스타일 상태 관리
+        const styleState = {
+            italic: false,
+            bold: false, // false = bold (기본값), true = normal (얇게)
+            underline: false,
+            linethrough: false
+        };
+
+        // 그라데이션 상태
+        const gradientState = {
+            enabled: false,
+            type: 'linear',
+            angle: 90,
+            colors: ['#FF3366', '#6C5CE7']
+        };
+
+        // 색놀이 상태
+        const colorPlayState = {
+            enabled: false,
+            chars: [],
+            fontSize: 13.5  // 전체 폰트 크기
+        };
+
+        // 선택지 상태
+        const choiceState = {
+            enabled: false,
+            title: '',
+            titleStyle: {
+                fontSize: 13.5,
+                color: '#000000',
+                italic: false,
+                bold: false,
+                underline: false,
+                linethrough: false
+            },
+            choices: []  // { name: '', content: '', nameStyle: {...} }
+        };
+
+        // 프리셋 상태 (단일 변수로 관리)
+        let activePreset = null; // null, 'example1', 'colorPlay', 'choice'
+
+
+        // DOM 요소 캐싱
+        const elements = {
+            fontSize: document.getElementById('fontSize'),
+            fontSizeValue: document.getElementById('fontSizeValue'),
+            bgWidth: document.getElementById('bgWidth'),
+            bgWidthValue: document.getElementById('bgWidthValue'),
+            bgHeight: document.getElementById('bgHeight'),
+            bgHeightValue: document.getElementById('bgHeightValue'),
+            lineHeight: document.getElementById('lineHeight'),
+            lineHeightValue: document.getElementById('lineHeightValue'),
+            borderRadius: document.getElementById('borderRadius'),
+            borderRadiusValue: document.getElementById('borderRadiusValue'),
+            textColor: document.getElementById('textColor'),
+            textColorHex: document.getElementById('textColorHex'),
+            bgColor: document.getElementById('bgColor'),
+            bgColorHex: document.getElementById('bgColorHex'),
+            textInput: document.getElementById('textInput'),
+            previewContent: document.getElementById('previewContent'),
+            output: document.getElementById('output'),
+            gradientPanel: document.getElementById('gradientPanel'),
+            gradientAngle: document.getElementById('gradientAngle'),
+            gradientAngleValue: document.getElementById('gradientAngleValue'),
+            gradientAngleGroup: document.getElementById('gradientAngleGroup'),
+            gradientColorStops: document.getElementById('gradientColorStops'),
+            colorPlayPanel: document.getElementById('colorPlayPanel'),
+            charItemsContainer: document.getElementById('charItemsContainer'),
+            choicePanel: document.getElementById('choicePanel'),
+            choiceItemsContainer: document.getElementById('choiceItemsContainer'),
+            choiceTitle: document.getElementById('choiceTitle'),
+            choiceGradientPanel: document.getElementById('choiceGradientPanel'),
+            choiceGradientLinear: document.getElementById('choiceGradientLinear'),
+            choiceGradientRadial: document.getElementById('choiceGradientRadial'),
+            choiceGradientColorStops: document.getElementById('choiceGradientColorStops'),
+            choiceGradientPanelTitle: document.getElementById('choiceGradientPanelTitle'),
+            choiceGradientAngle: document.getElementById('choiceGradientAngle'),
+            choiceGradientAngleValue: document.getElementById('choiceGradientAngleValue'),
+            choiceGradientAngleGroup: document.getElementById('choiceGradientAngleGroup')
+        };
+
+        // 슬라이더 값 업데이트 헬퍼 함수
+        const updateSliderValue = (sliderId, valueId, suffix = 'px', autoText = '자동') => {
+            const value = elements[sliderId].value;
+            if (value === '0') {
+                elements[valueId].textContent = autoText;
+            } else {
+                // suffix가 'px'인 경우 숫자만 표시 (label에 이미 px가 있음)
+                elements[valueId].textContent = value;
+            }
+            updatePreview();
+        };
+
+        // 색상 동기화 헬퍼 함수
+        const syncColor = (colorId, hexId) => {
+            elements[colorId].addEventListener('input', (e) => {
+                elements[hexId].value = e.target.value.toUpperCase();
+                updatePreview();
+            });
+            elements[hexId].addEventListener('input', (e) => {
+                const hex = e.target.value;
+                if (/^#[0-9A-F]{6}$/i.test(hex)) {
+                    elements[colorId].value = hex;
+                    updatePreview();
+                }
+            });
+        };
+
+        // 이벤트 리스너 설정
+        elements.fontSize.addEventListener('input', () => updateSliderValue('fontSize', 'fontSizeValue', 'px', null));
+        elements.bgWidth.addEventListener('input', () => updateSliderValue('bgWidth', 'bgWidthValue'));
+        elements.bgHeight.addEventListener('input', () => updateSliderValue('bgHeight', 'bgHeightValue'));
+        elements.lineHeight.addEventListener('input', () => updateSliderValue('lineHeight', 'lineHeightValue'));
+        elements.borderRadius.addEventListener('input', () => {
+            elements.borderRadiusValue.textContent = elements.borderRadius.value;
+            updatePreview();
+        });
+
+        // 색상 동기화
+        syncColor('textColor', 'textColorHex');
+        syncColor('bgColor', 'bgColorHex');
+
+        // 텍스트 입력 이벤트
+        if (elements.textInput) {
+            elements.textInput.addEventListener('input', updatePreview);
+        }
+
+        // 그라데이션 색상 이벤트 위임
+        elements.gradientColorStops.addEventListener('input', (e) => {
+            if (e.target.classList.contains('gradient-color')) {
+                const index = parseInt(e.target.dataset.index);
+                const color = e.target.value.toUpperCase();
+                gradientState.colors[index] = color;
+                const hexInput = document.querySelector(`.gradient-color-hex[data-index="${index}"]`);
+                if (hexInput) hexInput.value = color;
+                updatePreview();
+            } else if (e.target.classList.contains('gradient-color-hex')) {
+                const hex = e.target.value;
+                if (/^#[0-9A-F]{6}$/i.test(hex)) {
+                    const index = parseInt(e.target.dataset.index);
+                    gradientState.colors[index] = hex.toUpperCase();
+                    const colorInput = document.querySelector(`.gradient-color[data-index="${index}"]`);
+                    if (colorInput) colorInput.value = hex;
+                    updatePreview();
+                }
+            }
+        });
+
+        // 그라데이션 각도 슬라이더
+        elements.gradientAngle.addEventListener('input', () => {
+            gradientState.angle = elements.gradientAngle.value;
+            elements.gradientAngleValue.textContent = gradientState.angle;
+            updatePreview();
+        });
+
+        // 그라데이션 패널 함수
+        function openGradientPanel() {
+            elements.gradientPanel.classList.add('active');
+            elements.gradientPanel.classList.remove('minimized');
+            gradientState.enabled = true;
+            updatePreview();
+        }
+
+        function minimizeGradientPanel(e) {
+            e.stopPropagation();
+            elements.gradientPanel.classList.add('minimized');
+        }
+
+        function toggleGradientPanel(e) {
+            // 패널 자체를 클릭했을 때만 (내부 요소 클릭은 무시)
+            if (e.target === elements.gradientPanel && elements.gradientPanel.classList.contains('minimized')) {
+                elements.gradientPanel.classList.remove('minimized');
+            }
+        }
+
+        function closeGradientPanel() {
+            elements.gradientPanel.classList.remove('active');
+            elements.gradientPanel.classList.remove('minimized');
+            gradientState.enabled = false;
+            updatePreview();
+        }
+
+        function setGradientType(type, e) {
+            gradientState.type = type;
+            document.querySelectorAll('.gradient-type-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // 원형일 때 각도 설정 숨기기
+            if (type === 'radial') {
+                elements.gradientAngleGroup.style.display = 'none';
+            } else {
+                elements.gradientAngleGroup.style.display = 'block';
+            }
+            
+            updatePreview();
+        }
+
+        function addGradientColor() {
+            const newIndex = gradientState.colors.length;
+            gradientState.colors.push('#FFFFFF');
+            
+            const colorStopHtml = `
+                <div class="color-stop-item" data-index="${newIndex}">
+                    ${newIndex >= 2 ? '<button class="remove-color-btn" onclick="removeGradientColor(' + newIndex + ')">×</button>' : ''}
+                    <div class="form-group">
+                        <label>색상 ${newIndex + 1}</label>
+                        <div class="color-input-group">
+                            <input type="color" class="gradient-color" data-index="${newIndex}" value="#FFFFFF">
+                            <input type="text" class="gradient-color-hex" data-index="${newIndex}" value="#FFFFFF" maxlength="7">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            elements.gradientColorStops.insertAdjacentHTML('beforeend', colorStopHtml);
+            updatePreview();
+        }
+
+        function removeGradientColor(index) {
+            if (gradientState.colors.length <= 2) return; // 최소 2개 유지
+            
+            gradientState.colors.splice(index, 1);
+            
+            // DOM 재구성
+            elements.gradientColorStops.innerHTML = '';
+            gradientState.colors.forEach((color, i) => {
+                const colorStopHtml = `
+                    <div class="color-stop-item" data-index="${i}">
+                        ${i >= 2 ? '<button class="remove-color-btn" onclick="removeGradientColor(' + i + ')">×</button>' : ''}
+                        <div class="form-group">
+                            <label>색상 ${i + 1}</label>
+                            <div class="color-input-group">
+                                <input type="color" class="gradient-color" data-index="${i}" value="${color}">
+                                <input type="text" class="gradient-color-hex" data-index="${i}" value="${color}" maxlength="7">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                elements.gradientColorStops.insertAdjacentHTML('beforeend', colorStopHtml);
+            });
+            
+            updatePreview();
+        }
+
+        function toggleStyle(type) {
+            styleState[type] = !styleState[type];
+            document.getElementById(type + 'Btn').classList.toggle('active', styleState[type]);
+            updatePreview();
+        }
+
+        // GPT 권장: 통합된 프리셋 관리
+        function applyPreset(preset) {
+            if (preset === 'basic') {
+                activePreset = null;
+            } else {
+                // 토글 로직
+                activePreset = (activePreset === preset) ? null : preset;
+            }
+            
+            updatePresetUI();
+            applyPresetLogic();
+            updatePreview();
+        }
+
+        function updatePresetUI() {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                const p = btn.getAttribute('data-preset');
+                
+                // 기본 버튼은 항상 active 유지
+                if (btn.textContent.includes('기본')) {
+                    btn.classList.add('active');
+                    return;
+                }
+                
+                if (!p) return;
+                
+                // 다른 프리셋이 활성화되어 있으면 현재 버튼 비활성화
+                // 단, 현재 활성화된 프리셋 버튼은 제외 (잠금 안 함)
+                if (activePreset && p !== activePreset) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                }
+                
+                // active 클래스 토글
+                btn.classList.toggle('active', p === activePreset);
+            });
+        }
+
+        function applyPresetLogic() {
+            // 모든 패널 닫기
+            hideAllPresetPanels();
+            
+            // 스타일 초기화 (기본 모드일 때)
+            if (activePreset === null) {
+                Object.keys(styleState).forEach(key => styleState[key] = false);
+                document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
+                
+                const defaults = {
+                    fontSize: [13.5, '13.5'],
+                    textColor: ['#000000', '#000000'],
+                    bgColor: ['#f1f1f1', '#F1F1F1'],
+                    bgWidth: [0, '자동'],
+                    bgHeight: [0, '자동'],
+                    lineHeight: [0, '자동'],
+                    borderRadius: [0, '0']
+                };
+                
+                Object.entries(defaults).forEach(([key, [val, text]]) => {
+                    elements[key].value = val;
+                    const valueKey = key + 'Value';
+                    if (elements[valueKey]) {
+                        elements[valueKey].textContent = text;
+                    }
+                    if (key.includes('Color')) {
+                        elements[key + 'Hex'].value = text;
+                    }
+                });
+            }
+            
+            // 활성 프리셋에 따라 패널 표시
+            switch(activePreset) {
+                case 'example1':
+                    openGradientPanel();
+                    break;
+                case 'colorPlay':
+                    openColorPlay();
+                    break;
+                case 'choice':
+                    openChoice();
+                    break;
+                default:
+                    // 기본 모드 - 아무것도 안 함
+                    break;
+            }
+        }
+
+        function hideAllPresetPanels() {
+            if (gradientState.enabled) closeGradientPanel();
+            if (colorPlayState.enabled) closeColorPlay();
+            if (choiceState.enabled) closeChoice();
+        }
+
+        function updatePreview() {
+            const rawText = elements.textInput ? elements.textInput.value : '샘플 텍스트';
+            // 대괄호를 HTML 엔티티로 변환 (Roll20 코드용)
+            const text = rawText.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;');
+            // 미리보기용은 원본 텍스트 사용
+            const previewText = rawText;
+            
+            // 값 가져오기
+            const values = {
+                fontSize: elements.fontSize.value,
+                textColor: elements.textColor.value.toUpperCase(),
+                bgColor: elements.bgColor.value.toUpperCase(),
+                bgWidth: elements.bgWidth.value,
+                bgHeight: elements.bgHeight.value,
+                lineHeight: elements.lineHeight.value,
+                borderRadius: elements.borderRadius.value
+            };
+            
+            // 기본값
+            const defaults = {
+                fontSize: '13.5',
+                bgColor: '#F1F1F1'
+            };
+            
+            // 스타일 계산
+            const styles = {
+                fontStyle: styleState.italic ? 'italic' : 'normal',
+                fontWeight: styleState.bold ? 'normal' : 'bold',
+                textDecoration: [
+                    styleState.underline && 'underline',
+                    styleState.linethrough && 'line-through'
+                ].filter(Boolean).join(' ') || 'none'
+            };
+            
+            // Roll20 스타일 문자열 생성
+            const styleProps = [];
+            
+            if (values.fontSize !== defaults.fontSize) styleProps.push(`font-size:${values.fontSize}px`);
+            styleProps.push(`font-style:${styles.fontStyle}`);
+            styleProps.push(`font-weight:${styles.fontWeight}`);
+            styleProps.push(`color:${values.textColor}`);
+            styleProps.push(`text-decoration:${styles.textDecoration}`);
+            
+            if (values.bgWidth !== '0') styleProps.push(`width:${values.bgWidth}px`);
+            if (values.bgHeight !== '0') styleProps.push(`height:${values.bgHeight}px`);
+            
+            // line-height 처리
+            if (values.lineHeight !== '0') {
+                styleProps.push(`line-height:${values.lineHeight}px`);
+            } else if (values.bgHeight !== '0') {
+                styleProps.push(`line-height:${values.bgHeight}px`);
+            }
+            
+            if (values.borderRadius !== '0') styleProps.push(`border-radius:${values.borderRadius}px`);
+            
+            // 그라데이션 또는 배경색 처리
+            let styleString;
+            let hasGradient = false;
+            if (gradientState.enabled) {
+                // 그라데이션일 때는 display:block 사용
+                styleProps.push('display:block');
+                const colorStops = gradientState.colors.join(', ');
+                const gradientType = gradientState.type === 'linear' 
+                    ? `linear-gradient(${gradientState.angle}deg, ${colorStops})`
+                    : `radial-gradient(circle, ${colorStops})`;
+                // background-image 사용
+                styleString = styleProps.join('; ') + `; background-image:${gradientType}`;
+                hasGradient = true;
+            } else {
+                // 그라데이션이 없을 때는 display:inline-block 사용
+                styleProps.push('display:inline-block');
+                if (values.bgColor !== defaults.bgColor) {
+                    styleProps.push(`background-color:${values.bgColor}`);
+                }
+                styleString = styleProps.join('; ') + ';';
+            }
+            
+            // 미리보기 스타일 생성
+            const previewProps = [
+                `font-size:${values.fontSize}px`,
+                `font-style:${styles.fontStyle}`,
+                `font-weight:${styles.fontWeight}`,
+                `color:${values.textColor}`,
+                `text-decoration:${styles.textDecoration}`,
+                `display:inline-block`,
+                `width:${values.bgWidth !== '0' ? values.bgWidth : 600}px`
+            ];
+            
+            // height와 line-height가 설정되었을 때는 padding을 0으로, 그렇지 않으면 10px
+            const hasDimensions = values.bgHeight !== '0' || values.lineHeight !== '0';
+            previewProps.push(`padding:${hasDimensions ? '0' : '10px'}`);
+            
+            if (values.bgHeight !== '0') {
+                previewProps.push(`height:${values.bgHeight}px`);
+                if (values.lineHeight === '0') {
+                    previewProps.push(`line-height:${values.bgHeight}px`);
+                }
+            }
+            if (values.lineHeight !== '0') previewProps.push(`line-height:${values.lineHeight}px`);
+            if (values.borderRadius !== '0') previewProps.push(`border-radius:${values.borderRadius}px`);
+            
+            // 그라데이션 또는 배경색 (미리보기)
+            if (gradientState.enabled) {
+                const colorStops = gradientState.colors.join(', ');
+                const gradientType = gradientState.type === 'linear' 
+                    ? `linear-gradient(${gradientState.angle}deg, ${colorStops})`
+                    : `radial-gradient(circle, ${colorStops})`;
+                previewProps.push(`background:${gradientType}`);
+            } else {
+                previewProps.push(`background-color:${values.bgColor}`);
+            }
+            
+            // 미리보기 업데이트
+            Object.assign(elements.previewContent.style, {
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '300px'
+            });
+            
+            // Roll20 코드 생성 및 미리보기 업데이트
+            if (choiceState.enabled) {
+                // 선택지 모드 미리보기 생성
+                let previewHTML = '';
+                
+                // 선택지 주제
+                if (choiceState.title) {
+                    const ts = choiceState.titleStyle;
+                    const titleStyle = `
+                        font-size: ${ts.fontSize}px;
+                        color: ${ts.color};
+                        font-style: ${ts.italic ? 'italic' : 'normal'};
+                        font-weight: ${ts.bold ? 'normal' : 'bold'};
+                        text-decoration: ${[ts.underline && 'underline', ts.linethrough && 'line-through'].filter(Boolean).join(' ') || 'none'};
+                        display: block;
+                        margin-bottom: 10px;
+                        text-align: center;
+                    `;
+                    previewHTML += `<div style="${titleStyle}">${choiceState.title}</div>`;
+                }
+                
+                // 각 선택지를 버튼처럼 표시 (클릭 불가)
+                choiceState.choices.forEach((choice, index) => {
+                    const name = choice.name || `${index + 1}번 선택지`;
+                    const content = choice.content || `선택지 결과`;
+                    const ns = choice.nameStyle || { fontSize: 13.5, color: '#000000', bgColor: '#F1F1F1', bgWidth: 0, italic: false, bold: false, underline: false, linethrough: false, hasGradient: false, gradientType: 'linear', gradientAngle: 90, gradientColors: ['#FF3366', '#6C5CE7'] };
+                    
+                    let bgStyle = '';
+                    if (ns.hasGradient && ns.gradientColors) {
+                        const angle = ns.gradientAngle || 90;
+                        const gradientType = ns.gradientType === 'radial' 
+                            ? `radial-gradient(circle, ${ns.gradientColors.join(', ')})`
+                            : `linear-gradient(${angle}deg, ${ns.gradientColors.join(', ')})`;
+                        bgStyle = `background: ${gradientType};`;
+                    } else {
+                        bgStyle = `background-color: ${ns.bgColor};`;
+                    }
+                    
+                    const nameStyle = `
+                        font-size: ${ns.fontSize}px;
+                        color: ${ns.color};
+                        ${bgStyle}
+                        font-style: ${ns.italic ? 'italic' : 'normal'};
+                        font-weight: ${ns.bold ? 'normal' : 'bold'};
+                        text-decoration: ${[ns.underline && 'underline', ns.linethrough && 'line-through'].filter(Boolean).join(' ') || 'none'};
+                        display: block;
+                        padding: 10px;
+                        margin: 5px 0;
+                        text-align: center;
+                        border-radius: 5px;
+                        cursor: not-allowed;
+                        opacity: 0.8;
+                        ${ns.bgWidth !== 0 ? `width: ${ns.bgWidth}px; margin-left: auto; margin-right: auto;` : ''}
+                    `;
+                    
+                    const contentStyle = `
+                        padding: 10px;
+                        margin: 5px 0;
+                        border: 2px dashed #888;
+                        border-radius: 5px;
+                        background-color: rgba(255, 255, 255, 0.05);
+                        color: #aaa;
+                        font-size: 0.9rem;
+                    `;
+                    
+                    previewHTML += `<div style="${nameStyle}">${name}</div>`;
+                    previewHTML += `<div style="${contentStyle}">${content}</div>`;
+                });
+                
+                elements.previewContent.innerHTML = `<div style="width: 100%; max-width: 600px;">${previewHTML}</div>`;
+                
+                // 선택지 Roll20 코드 생성
+                let choiceCode = '/desc ';
+                
+                // 선택지 주제 코드
+                if (choiceState.title) {
+                    const ts = choiceState.titleStyle;
+                    const titleStyles = [
+                        `font-size:${ts.fontSize}px`,
+                        `font-style:${ts.italic ? 'italic' : 'normal'}`,
+                        `font-weight:${ts.bold ? 'normal' : 'bold'}`,
+                        `color:${ts.color}`,
+                        `text-decoration:${[ts.underline && 'underline', ts.linethrough && 'line-through'].filter(Boolean).join(' ') || 'none'}`,
+                        'display:block',
+                        'margin-top:-4px',
+                        'padding:5px'
+                    ].join('; ');
+                    
+                    // 대괄호를 HTML 엔티티로 변환
+                    const escapedTitle = choiceState.title.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;');
+                    choiceCode += `[${escapedTitle}](#" style="${titleStyles};")`;
+                }
+                
+                // 각 선택지 코드
+                choiceState.choices.forEach((choice, index) => {
+                    const name = choice.name || `${index + 1}번 선택지`;
+                    const content = choice.content || `선택지 결과`;
+                    // 대괄호를 HTML 엔티티로 변환
+                    const escapedName = name.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;');
+                    const escapedContent = content.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;');
+                    const ns = choice.nameStyle || { fontSize: 13.5, color: '#FFFFFF', bgColor: '#808080', bgWidth: 0, italic: false, bold: false, underline: false, linethrough: false, hasGradient: false, gradientType: 'linear', gradientAngle: 90, gradientColors: ['#FF3366', '#6C5CE7'] };
+                    const marginTop = index > 0 ? 'margin-top:3px;' : '';
+                    
+                    const nameStyles = [
+                        `font-size:${ns.fontSize}px`,
+                        `font-style:${ns.italic ? 'italic' : 'normal'}`,
+                        `font-weight:${ns.bold ? 'normal' : 'bold'}`,
+                        `color:${ns.color}`,
+                        `text-decoration:${[ns.underline && 'underline', ns.linethrough && 'line-through'].filter(Boolean).join(' ') || 'none'}`,
+                        'text-align:left',
+                        'display:block',
+                        'border:hidden',
+                        'margin-left:-4px',
+                        ns.bgWidth !== 0 ? `width:${ns.bgWidth}px` : '',
+                        marginTop
+                    ].filter(Boolean);
+                    
+                    // 그라데이션 또는 배경색
+                    if (ns.hasGradient && ns.gradientColors) {
+                        const angle = ns.gradientAngle || 90;
+                        const gradientType = ns.gradientType === 'radial'
+                            ? `radial-gradient(circle, ${ns.gradientColors.join(', ')})`
+                            : `linear-gradient(${angle}deg, ${ns.gradientColors.join(', ')})`;
+                        const gradientStr = `background-image:${gradientType}`;
+                        const styleStr = nameStyles.join('; ') + '; ' + gradientStr;
+                        choiceCode += `[${escapedName}](!&#13; ${escapedContent} #" style="${styleStr}`;
+                    } else {
+                        nameStyles.push(`background-color:${ns.bgColor}`);
+                        const styleStr = nameStyles.join('; ');
+                        choiceCode += `[${escapedName}](!&#13; ${escapedContent} #" style="${styleStr};")`;
+                    }
+                });
+                
+                elements.output.textContent = choiceCode;
+            } else if (colorPlayState.enabled) {
+                // 색놀이 모드일 때 미리보기
+                let previewHTML = '';
+                colorPlayState.chars.forEach(char => {
+                    if (char.char) {
+                        const styleString = buildCharStyle(char);
+                        previewHTML += `<span style="${styleString}">${char.char}</span>`;
+                    }
+                });
+                elements.previewContent.innerHTML = `<div>${previewHTML}</div>`;
+                
+                // 색놀이 Roll20 코드 생성
+                let colorPlayCode = '/desc ';
+                colorPlayState.chars.forEach(char => {
+                    if (char.char) {
+                        const styleString = buildCharStyle(char);
+                        // 대괄호를 HTML 엔티티로 변환
+                        const escapedChar = char.char.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;');
+                        colorPlayCode += `[${escapedChar}&nbsp;](#" style="${styleString};")`;
+                    }
+                });
+                elements.output.textContent = colorPlayCode;
+            } else {
+                // 기본 모드 미리보기 (원본 텍스트 사용)
+                elements.previewContent.innerHTML = `<div style="${previewProps.join(';')}">${previewText}</div>`;
+                
+                // 기본 모드 Roll20 코드 생성 (변환된 텍스트 사용)
+                if (hasGradient) {
+                    elements.output.textContent = `/desc [${text}](#" style="${styleString}`;
+                } else {
+                    elements.output.textContent = `/desc [${text}](#" style="${styleString}")`;
+                }
+            }
+        }
+
+        // 색놀이 글자 스타일 생성 헬퍼 함수
+        function buildCharStyle(char) {
+            const styles = [
+                `font-size:${colorPlayState.fontSize}px`,
+                `font-style:${char.italic ? 'italic' : 'normal'}`,
+                `font-weight:${char.bold ? 'normal' : 'bold'}`,
+                `color:${char.color}`,
+                `text-decoration:${[char.underline && 'underline', char.linethrough && 'line-through'].filter(Boolean).join(' ') || 'none'}`,
+                'display:inline-block'
+            ];
+            return styles.join('; ');
+        }
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(elements.output.textContent).then(() => {
+                const notification = document.getElementById('notification');
+                notification.classList.add('show');
+                setTimeout(() => notification.classList.remove('show'), 2000);
+            });
+        }
+
+        function resetForm() {
+            // 텍스트 입력 초기화
+            elements.textInput.value = '샘플 텍스트';
+            
+            // 기본 프리셋 적용
+            applyPreset('basic');
+        }
+
+
+        // 색놀이 함수들
+        function openColorPlay() {
+            colorPlayState.enabled = true;
+            elements.colorPlayPanel.classList.add('active');
+            elements.colorPlayPanel.classList.remove('minimized');
+            document.getElementById('minimizeColorPlayBtn').style.display = 'flex';
+            elements.textInput.disabled = true;
+            elements.textInput.style.opacity = '0.5';
+            elements.textInput.style.cursor = 'not-allowed';
+            
+            // 다른 UI 요소들 비활성화
+            disableOtherControls(true);
+            
+            // 기존 데이터가 있으면 복원, 없으면 초기 글자 하나 추가
+            if (colorPlayState.chars.length === 0) {
+                addCharItem();
+            } else {
+                // 기존 데이터 복원
+                elements.charItemsContainer.innerHTML = '';
+                colorPlayState.chars.forEach((char, i) => {
+                    elements.charItemsContainer.insertAdjacentHTML('beforeend', createCharItemHTML(i, char));
+                });
+            }
+            
+            // 미리보기 업데이트는 하지 않음 (실제 코드에 영향 없음)
+        }
+
+        function closeColorPlay() {
+            colorPlayState.enabled = false;
+            // colorPlayState.chars = []; // 데이터 유지를 위해 주석 처리
+            elements.colorPlayPanel.classList.remove('active');
+            elements.colorPlayPanel.classList.remove('minimized');
+            document.getElementById('minimizeColorPlayBtn').style.display = 'none';
+            elements.charItemsContainer.innerHTML = '';
+            elements.textInput.disabled = false;
+            elements.textInput.style.opacity = '1';
+            elements.textInput.style.cursor = 'text';
+            
+            // 다른 UI 요소들 재활성화
+            disableOtherControls(false);
+        }
+
+        function minimizeColorPlayPanel() {
+            elements.colorPlayPanel.classList.add('minimized');
+            document.getElementById('minimizeColorPlayBtn').style.display = 'none';
+        }
+
+        function toggleColorPlayPanel(e) {
+            // 패널 자체를 클릭했을 때만 (내부 요소 클릭은 무시)
+            if (e.target === elements.colorPlayPanel && elements.colorPlayPanel.classList.contains('minimized')) {
+                elements.colorPlayPanel.classList.remove('minimized');
+                document.getElementById('minimizeColorPlayBtn').style.display = 'flex';
+            }
+        }
+
+        function addCharItem() {
+            const charIndex = colorPlayState.chars.length;
+            const newChar = {
+                char: '',
+                color: '#000000',
+                italic: false,
+                bold: false,
+                underline: false,
+                linethrough: false
+            };
+            
+            colorPlayState.chars.push(newChar);
+            elements.charItemsContainer.insertAdjacentHTML('beforeend', createCharItemHTML(charIndex, newChar));
+        }
+
+        function removeCharItem(index) {
+            if (colorPlayState.chars.length <= 1) return; // 최소 1개 유지
+            
+            colorPlayState.chars.splice(index, 1);
+            
+            // DOM 재구성
+            elements.charItemsContainer.innerHTML = '';
+            colorPlayState.chars.forEach((char, i) => {
+                elements.charItemsContainer.insertAdjacentHTML('beforeend', createCharItemHTML(i, char));
+            });
+        }
+
+        // 색놀이 아이템 HTML 생성 헬퍼 함수
+        function createCharItemHTML(index, char) {
+            return `
+                <div class="char-item" data-char-index="${index}">
+                    <div class="char-item-header">
+                        <span class="char-label">색놀이 ${index + 1}</span>
+                        ${index > 0 ? `<button class="remove-char-btn" onclick="removeCharItem(${index})">×</button>` : ''}
+                    </div>
+                    <div class="form-group">
+                        <label>내용</label>
+                        <input type="text" class="char-input" data-char-index="${index}" 
+                               placeholder="입력하세요." value="${char.char || ''}" onchange="updateCharValue(${index}, this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>색상</label>
+                        <div class="color-input-group">
+                            <input type="color" class="char-color" data-char-index="${index}" value="${char.color}"
+                                   onchange="updateCharColor(${index}, this.value)">
+                            <input type="text" class="char-color-hex" data-char-index="${index}" value="${char.color}" maxlength="7"
+                                   onchange="updateCharColorHex(${index}, this.value)">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>스타일</label>
+                        <div class="char-controls">
+                            <button class="style-btn char-style-btn ${char.italic ? 'active' : ''}" data-char-index="${index}" data-style="italic"
+                                    onclick="toggleCharStyle(${index}, 'italic')">기울기</button>
+                            <button class="style-btn char-style-btn ${char.bold ? 'active' : ''}" data-char-index="${index}" data-style="bold"
+                                    onclick="toggleCharStyle(${index}, 'bold')">얇게</button>
+                            <button class="style-btn char-style-btn ${char.underline ? 'active' : ''}" data-char-index="${index}" data-style="underline"
+                                    onclick="toggleCharStyle(${index}, 'underline')">밑줄</button>
+                            <button class="style-btn char-style-btn ${char.linethrough ? 'active' : ''}" data-char-index="${index}" data-style="linethrough"
+                                    onclick="toggleCharStyle(${index}, 'linethrough')">취소선</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateCharValue(index, value) {
+            colorPlayState.chars[index].char = value;
+            updatePreview(); // 코드 업데이트
+        }
+
+        function updateCharColor(index, color) {
+            colorPlayState.chars[index].color = color.toUpperCase();
+            const hexInput = document.querySelector(`.char-color-hex[data-char-index="${index}"]`);
+            if (hexInput) hexInput.value = color.toUpperCase();
+            updatePreview(); // 코드 업데이트
+        }
+
+        function updateCharColorHex(index, hex) {
+            if (/^#[0-9A-F]{6}$/i.test(hex)) {
+                colorPlayState.chars[index].color = hex.toUpperCase();
+                const colorInput = document.querySelector(`.char-color[data-char-index="${index}"]`);
+                if (colorInput) colorInput.value = hex;
+                updatePreview(); // 코드 업데이트
+            }
+        }
+
+        function toggleCharStyle(index, style) {
+            colorPlayState.chars[index][style] = !colorPlayState.chars[index][style];
+            const btn = document.querySelector(`.char-style-btn[data-char-index="${index}"][data-style="${style}"]`);
+            if (btn) {
+                btn.classList.toggle('active', colorPlayState.chars[index][style]);
+            }
+            updatePreview(); // 코드 업데이트
+        }
+
+        // UI 요소 비활성화/활성화 함수
+        function disableOtherControls(disable) {
+            const opacity = disable ? '0.3' : '1';
+            const pointerEvents = disable ? 'none' : 'auto';
+            
+            // 그룹 요소들 비활성화
+            const groups = [
+                'styleOptionsGroup', 'fontSizeGroup', 'textColorGroup', 
+                'bgColorGroup', 'bgSizeGroup', 'bgHeightGroup', 
+                'lineHeightGroup', 'borderRadiusGroup'
+            ];
+            
+            groups.forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) {
+                    elem.style.opacity = opacity;
+                    elem.style.pointerEvents = pointerEvents;
+                }
+            });
+            
+            // 버튼 및 패널 비활성화
+            ['gradientPresetBtn', 'colorPlayPresetBtn', 'example3PresetBtn'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.style.opacity = opacity;
+                    btn.style.pointerEvents = pointerEvents;
+                }
+            });
+            
+            if (elements.gradientPanel) {
+                elements.gradientPanel.style.opacity = opacity;
+                elements.gradientPanel.style.pointerEvents = pointerEvents;
+            }
+        }
+
+        // 색놀이 전체 폰트 크기 업데이트
+        function updateColorPlayFontSize(value) {
+            colorPlayState.fontSize = value;
+            const valueDisplay = document.getElementById('colorPlayFontSizeValue');
+            if (valueDisplay) {
+                valueDisplay.textContent = value;
+            }
+            updatePreview(); // 코드 업데이트
+        }
+
+        // 선택지 함수들
+        function openChoice() {
+            choiceState.enabled = true;
+            elements.choicePanel.classList.add('active');
+            elements.choicePanel.classList.remove('minimized');
+            document.getElementById('minimizeChoiceBtn').style.display = 'flex';
+            elements.textInput.disabled = true;
+            elements.textInput.style.opacity = '0.5';
+            elements.textInput.style.cursor = 'not-allowed';
+            
+            disableOtherControls(true);
+            
+            // 기존 데이터가 있으면 복원, 없으면 초기 선택지 2개 추가
+            if (choiceState.choices.length === 0) {
+                addChoiceItem();
+                addChoiceItem();
+            } else {
+                // 기존 데이터 복원
+                rebuildChoiceItems();
+            }
+            
+            // 주제 복원
+            elements.choiceTitle.value = choiceState.title || '';
+        }
+
+        function closeChoice() {
+            choiceState.enabled = false;
+            elements.choicePanel.classList.remove('active');
+            elements.choicePanel.classList.remove('minimized');
+            document.getElementById('minimizeChoiceBtn').style.display = 'none';
+            elements.choiceItemsContainer.innerHTML = '';
+            elements.textInput.disabled = false;
+            elements.textInput.style.opacity = '1';
+            elements.textInput.style.cursor = 'text';
+            
+            disableOtherControls(false);
+        }
+
+        function minimizeChoicePanel() {
+            elements.choicePanel.classList.add('minimized');
+            document.getElementById('minimizeChoiceBtn').style.display = 'none';
+        }
+
+        function toggleChoicePanel(e) {
+            if (e.target === elements.choicePanel && elements.choicePanel.classList.contains('minimized')) {
+                elements.choicePanel.classList.remove('minimized');
+                document.getElementById('minimizeChoiceBtn').style.display = 'flex';
+            }
+        }
+
+        function addChoiceItem() {
+            const choiceIndex = choiceState.choices.length;
+            const newChoice = {
+                name: '',
+                content: '',
+                nameStyle: {
+                    fontSize: 13.5,
+                    color: '#000000',
+                    bgColor: '#F1F1F1',
+                    bgWidth: 0,
+                    italic: false,
+                    bold: false,
+                    underline: false,
+                    linethrough: false,
+                    hasGradient: false,
+                    gradientType: 'linear',
+                    gradientAngle: 90,
+                    gradientColors: ['#FF3366', '#6C5CE7']
+                }
+            };
+            
+            choiceState.choices.push(newChoice);
+            elements.choiceItemsContainer.insertAdjacentHTML('beforeend', createChoiceItemHTML(choiceIndex, newChoice));
+        }
+
+        function removeChoiceItem(index) {
+            if (choiceState.choices.length <= 1) return; // 최소 1개 유지
+            
+            choiceState.choices.splice(index, 1);
+            
+            // DOM 재구성
+            rebuildChoiceItems();
+        }
+
+        function createChoiceItemHTML(index, choice) {
+            const ns = choice.nameStyle || { fontSize: 13.5, color: '#000000', bgColor: '#F1F1F1', bgWidth: 0, italic: false, bold: false, underline: false, linethrough: false };
+            
+            return `
+                <div class="choice-item" data-choice-index="${index}">
+                    <div class="choice-item-header">
+                        <span class="choice-label">${index + 1}번 선택지</span>
+                        ${index > 0 ? `<button class="remove-choice-btn" onclick="removeChoiceItem(${index})">×</button>` : ''}
+                    </div>
+                    
+                    <!-- 선택지 이름 -->
+                    <div class="form-group">
+                        <label>선택지 이름</label>
+                        <input type="text" class="char-input" data-choice-index="${index}" 
+                               placeholder="${index + 1}번 선택지" value="${choice.name || ''}" onchange="updateChoiceName(${index}, this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>이름 스타일</label>
+                        <div class="choice-style-controls">
+                            <button class="choice-style-btn ${ns.italic ? 'active' : ''}" onclick="toggleChoiceStyle(${index}, 'name', 'italic')">기울기</button>
+                            <button class="choice-style-btn ${ns.bold ? 'active' : ''}" onclick="toggleChoiceStyle(${index}, 'name', 'bold')">얇게</button>
+                            <button class="choice-style-btn ${ns.underline ? 'active' : ''}" onclick="toggleChoiceStyle(${index}, 'name', 'underline')">밑줄</button>
+                            <button class="choice-style-btn ${ns.linethrough ? 'active' : ''}" onclick="toggleChoiceStyle(${index}, 'name', 'linethrough')">취소선</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 폰트 크기 + 텍스트 색상 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>폰트 크기: <span id="nameFontSize${index}Value">${ns.fontSize}</span>px</label>
+                            <input type="range" value="${ns.fontSize}" min="8" max="50" step="0.5" 
+                                   class="font-size-slider" oninput="updateChoiceStyleValue(${index}, 'name', 'fontSize', this.value)">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>텍스트 색상</label>
+                            <div class="color-input-group">
+                                <input type="color" value="${ns.color}" onchange="updateChoiceStyleValue(${index}, 'name', 'color', this.value)">
+                                <input type="text" value="${ns.color}" maxlength="7" onchange="updateChoiceStyleValueHex(${index}, 'name', 'color', this.value)">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 배경 색상 + 배경 너비 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>배경 색상</label>
+                            <div class="color-input-group">
+                                <input type="color" value="${ns.bgColor}" onchange="updateChoiceStyleValue(${index}, 'name', 'bgColor', this.value)" ${ns.hasGradient ? 'disabled style="opacity:0.5"' : ''}>
+                                <input type="text" value="${ns.bgColor}" maxlength="7" onchange="updateChoiceStyleValueHex(${index}, 'name', 'bgColor', this.value)" ${ns.hasGradient ? 'disabled style="opacity:0.5"' : ''}>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>배경 너비: <span id="nameBgWidth${index}Value">${ns.bgWidth === 0 ? '자동' : ns.bgWidth + 'px'}</span></label>
+                            <input type="range" value="${ns.bgWidth}" min="0" max="800" step="10" 
+                                   class="font-size-slider" oninput="updateChoiceStyleValue(${index}, 'name', 'bgWidth', this.value)">
+                        </div>
+                    </div>
+                    
+                    <!-- 배경 그라데이션 -->
+                    <div class="form-group">
+                        <label>배경 그라데이션</label>
+                        <button class="choice-style-btn ${ns.hasGradient ? 'active' : ''}" onclick="openChoiceGradientPanel(${index})" style="width: 100%;">
+                            ${ns.hasGradient ? '그라데이션 사용 중 ✓' : '그라데이션 추가'}
+                        </button>
+                    </div>
+                    
+                    <!-- 선택지 내용 (스타일 없음) -->
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>선택지 내용</label>
+                        <input type="text" class="char-input" data-choice-index="${index}" 
+                               placeholder="선택지 내용 ${index + 1}" value="${choice.content || ''}" onchange="updateChoiceContent(${index}, this.value)">
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateChoiceName(index, value) {
+            choiceState.choices[index].name = value;
+            updatePreview();
+        }
+
+        function updateChoiceContent(index, value) {
+            choiceState.choices[index].content = value;
+            updatePreview();
+        }
+
+        // 선택지 그라데이션 패널 관련
+        let currentChoiceGradientIndex = -1;
+
+        // 헬퍼: 선택지 DOM 재구성
+        function rebuildChoiceItems() {
+            elements.choiceItemsContainer.innerHTML = '';
+            choiceState.choices.forEach((c, i) => {
+                elements.choiceItemsContainer.insertAdjacentHTML('beforeend', createChoiceItemHTML(i, c));
+            });
+        }
+
+        function openChoiceGradientPanel(index) {
+            const choice = choiceState.choices[index];
+            const ns = choice.nameStyle;
+            
+            // 이미 그라데이션이 활성화되어 있으면 토글 (끄기)
+            if (ns.hasGradient) {
+                // 현재 열려있는 패널이 같은 선택지면 끄기
+                if (currentChoiceGradientIndex === index) {
+                    ns.hasGradient = false;
+                    rebuildChoiceItems();
+                    elements.choiceGradientPanel.classList.remove('active');
+                    currentChoiceGradientIndex = -1;
+                    updatePreview();
+                    return;
+                }
+                // 다른 선택지면 그냥 전환
+            } else {
+                // 그라데이션 활성화
+                ns.hasGradient = true;
+                rebuildChoiceItems();
+            }
+            
+            // 패널 전환
+            currentChoiceGradientIndex = index;
+            
+            // 제목 업데이트
+            elements.choiceGradientPanelTitle.textContent = `${index + 1}번 선택지의 그라데이션 설정`;
+            
+            // 패널 열기
+            elements.choiceGradientPanel.classList.add('active');
+            
+            // 타입 버튼 설정
+            elements.choiceGradientLinear.classList.toggle('active', ns.gradientType === 'linear');
+            elements.choiceGradientRadial.classList.toggle('active', ns.gradientType === 'radial');
+            
+            // 각도 설정
+            elements.choiceGradientAngle.value = ns.gradientAngle || 90;
+            elements.choiceGradientAngleValue.textContent = ns.gradientAngle || 90;
+            
+            // 원형일 때 각도 숨기기
+            elements.choiceGradientAngleGroup.style.display = ns.gradientType === 'radial' ? 'none' : 'block';
+            
+            // 색상 목록 렌더링
+            renderChoiceGradientColors();
+        }
+
+        function closeChoiceGradientPanel() {
+            elements.choiceGradientPanel.classList.remove('active');
+            currentChoiceGradientIndex = -1;
+            updatePreview();
+        }
+
+        function setChoiceGradientType(type) {
+            if (currentChoiceGradientIndex < 0) return;
+            
+            choiceState.choices[currentChoiceGradientIndex].nameStyle.gradientType = type;
+            
+            elements.choiceGradientLinear.classList.toggle('active', type === 'linear');
+            elements.choiceGradientRadial.classList.toggle('active', type === 'radial');
+            
+            // 원형일 때 각도 설정 숨기기
+            elements.choiceGradientAngleGroup.style.display = type === 'radial' ? 'none' : 'block';
+            
+            updatePreview();
+        }
+
+        function renderChoiceGradientColors() {
+            if (currentChoiceGradientIndex < 0) return;
+            
+            const colors = choiceState.choices[currentChoiceGradientIndex].nameStyle.gradientColors;
+            elements.choiceGradientColorStops.innerHTML = '';
+            
+            colors.forEach((color, i) => {
+                const html = `
+                    <div class="color-stop-item" data-index="${i}">
+                        ${i >= 2 ? `<button class="remove-color-btn" onclick="removeChoiceGradientColor(${i})">×</button>` : ''}
+                        <div class="form-group">
+                            <label>색상 ${i + 1}</label>
+                            <div class="color-input-group">
+                                <input type="color" value="${color}" onchange="updateChoiceGradientColor(${i}, this.value)">
+                                <input type="text" value="${color}" maxlength="7" onchange="updateChoiceGradientColorHex(${i}, this.value)">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                elements.choiceGradientColorStops.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function addChoiceGradientColor() {
+            if (currentChoiceGradientIndex < 0) return;
+            
+            choiceState.choices[currentChoiceGradientIndex].nameStyle.gradientColors.push('#FFFFFF');
+            renderChoiceGradientColors();
+            updatePreview();
+        }
+
+        function removeChoiceGradientColor(colorIndex) {
+            if (currentChoiceGradientIndex < 0) return;
+            const colors = choiceState.choices[currentChoiceGradientIndex].nameStyle.gradientColors;
+            if (colors.length <= 2) return;
+            
+            colors.splice(colorIndex, 1);
+            renderChoiceGradientColors();
+            updatePreview();
+        }
+
+        function updateChoiceGradientColor(colorIndex, value) {
+            if (currentChoiceGradientIndex < 0) return;
+            
+            choiceState.choices[currentChoiceGradientIndex].nameStyle.gradientColors[colorIndex] = value.toUpperCase();
+            updatePreview();
+        }
+
+        function updateChoiceGradientColorHex(colorIndex, value) {
+            if (currentChoiceGradientIndex < 0) return;
+            if (!/^#[0-9A-F]{6}$/i.test(value)) return;
+            
+            choiceState.choices[currentChoiceGradientIndex].nameStyle.gradientColors[colorIndex] = value.toUpperCase();
+            renderChoiceGradientColors();
+            updatePreview();
+        }
+
+        function updateChoiceGradientAngle(value) {
+            if (currentChoiceGradientIndex < 0) return;
+            
+            choiceState.choices[currentChoiceGradientIndex].nameStyle.gradientAngle = parseInt(value);
+            elements.choiceGradientAngleValue.textContent = value;
+            updatePreview();
+        }
+
+        function toggleChoiceGradient(index) {
+            const choice = choiceState.choices[index];
+            choice.nameStyle.hasGradient = !choice.nameStyle.hasGradient;
+            
+            // DOM 재구성
+            rebuildChoiceItems();
+            
+            updatePreview();
+        }
+
+        // 선택지 주제 스타일 함수들
+        function toggleChoiceTitleStyle(style) {
+            choiceState.titleStyle[style] = !choiceState.titleStyle[style];
+            const btn = document.getElementById(`title${style.charAt(0).toUpperCase() + style.slice(1)}Btn`);
+            if (btn) {
+                btn.classList.toggle('active', choiceState.titleStyle[style]);
+            }
+            updatePreview();
+        }
+
+        function updateChoiceTitleFontSize(value) {
+            choiceState.titleStyle.fontSize = parseFloat(value);
+            document.getElementById('titleFontSizeValue').textContent = value;
+            updatePreview();
+        }
+
+        function updateChoiceTitleColor(value) {
+            choiceState.titleStyle.color = value.toUpperCase();
+            document.getElementById('titleColorHex').value = value.toUpperCase();
+            updatePreview();
+        }
+
+        function updateChoiceTitleColorHex(value) {
+            if (/^#[0-9A-F]{6}$/i.test(value)) {
+                choiceState.titleStyle.color = value.toUpperCase();
+                document.getElementById('titleColor').value = value;
+                updatePreview();
+            }
+        }
+
+        // 선택지 스타일 함수들
+        function toggleChoiceStyle(index, field, style) {
+            const styleKey = field + 'Style';
+            choiceState.choices[index][styleKey][style] = !choiceState.choices[index][styleKey][style];
+            
+            // DOM 재구성으로 버튼 상태 업데이트
+            rebuildChoiceItems();
+            
+            updatePreview();
+        }
+
+        function updateChoiceStyleValue(index, field, property, value) {
+            const styleKey = field + 'Style';
+            
+            if (property === 'fontSize' || property === 'bgWidth') {
+                choiceState.choices[index][styleKey][property] = parseFloat(value);
+            } else {
+                choiceState.choices[index][styleKey][property] = value.toUpperCase();
+            }
+            
+            // 값 표시 업데이트
+            if (property === 'fontSize') {
+                const elem = document.getElementById(`${field}FontSize${index}Value`);
+                if (elem) elem.textContent = value;
+            } else if (property === 'bgWidth') {
+                const elem = document.getElementById(`${field}BgWidth${index}Value`);
+                if (elem) elem.textContent = value === '0' ? '자동' : value + 'px';
+            }
+            
+            updatePreview();
+        }
+
+        function updateChoiceStyleValueHex(index, field, property, value) {
+            if (/^#[0-9A-F]{6}$/i.test(value)) {
+                const styleKey = field + 'Style';
+                choiceState.choices[index][styleKey][property] = value.toUpperCase();
+                updatePreview();
+            }
+        }
+
+        elements.choiceTitle.addEventListener('input', (e) => {
+            choiceState.title = e.target.value;
+            updatePreview();
+        });
+
+        // 초기화
+        updatePresetUI(); // 기본 버튼 활성화
+        updatePreview();
+    </script>
+</body>
+</html>
