@@ -1842,10 +1842,17 @@
 
         function updatePreview() {
             const rawText = elements.textInput ? elements.textInput.value : '샘플 텍스트';
+            
+            // 줄바꿈으로 분리 (빈 줄 제거)
+            const lines = rawText.split('\n').filter(line => line.trim() !== '');
+            const isMultiLine = lines.length > 1;
+            
             // 대괄호를 HTML 엔티티로 변환 (Roll20 코드용)
-            const text = rawText.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;');
-            // 미리보기용은 원본 텍스트 사용
-            const previewText = rawText;
+            const processedLines = lines.map(line => line.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;'));
+            
+            // 첫 번째 줄 (미리보기용)
+            const previewText = lines[0] || '샘플 텍스트';
+            const text = processedLines[0] || '샘플 텍스트';
             
             // 값 가져오기
             const values = {
@@ -2119,13 +2126,39 @@
                 elements.output.textContent = colorPlayCode;
             } else {
                 // 기본 모드 미리보기 (원본 텍스트 사용)
-                elements.previewContent.innerHTML = `<div style="${previewProps.join(';')}">${previewText}</div>`;
+                if (isMultiLine) {
+                    // 여러 줄 미리보기
+                    let multiPreviewHTML = '';
+                    lines.forEach((line, idx) => {
+                        const marginStyle = idx > 0 ? 'margin-top: 3px;' : '';
+                        multiPreviewHTML += `<div style="${previewProps.join(';')};${marginStyle}">${line}</div>`;
+                    });
+                    elements.previewContent.innerHTML = multiPreviewHTML;
+                } else {
+                    // 단일 줄 미리보기
+                    elements.previewContent.innerHTML = `<div style="${previewProps.join(';')}">${previewText}</div>`;
+                }
                 
                 // 기본 모드 Roll20 코드 생성 (변환된 텍스트 사용)
-                if (hasGradient) {
-                    elements.output.textContent = `/desc [${text}](#" style="${styleString}`;
+                if (isMultiLine) {
+                    // 여러 줄 코드 생성
+                    let multiLineCode = '';
+                    processedLines.forEach((line, idx) => {
+                        if (hasGradient) {
+                            multiLineCode += `/desc [${line}](#" style="${styleString}${idx > 0 ? '; margin-top:3px' : ''}"\n`;
+                        } else {
+                            multiLineCode += `/desc [${line}](#" style="${styleString}${idx > 0 ? '; margin-top:3px' : ''}")`;
+                            if (idx < processedLines.length - 1) multiLineCode += '\n';
+                        }
+                    });
+                    elements.output.textContent = multiLineCode;
                 } else {
-                    elements.output.textContent = `/desc [${text}](#" style="${styleString}")`;
+                    // 단일 줄 코드 생성
+                    if (hasGradient) {
+                        elements.output.textContent = `/desc [${text}](#" style="${styleString}`;
+                    } else {
+                        elements.output.textContent = `/desc [${text}](#" style="${styleString}")`;
+                    }
                 }
             }
         }
